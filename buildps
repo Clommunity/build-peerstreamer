@@ -27,6 +27,7 @@ mkdir -p $WORKDIR
 	cd ..
 	cp Streamers-build/Streamers/streamer-udp-grapes-static ../../$BUILD_DIR/${ARCHDIR}/$BUILDNAME
 	cd ../..
+	strip $BUILD_DIR/${ARCHDIR}/$BUILDNAME
 }
 [[ "$ARCH" =~ arm.* ]] && {
 	ARCHDIR="arm"
