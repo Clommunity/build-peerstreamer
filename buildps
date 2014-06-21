@@ -1,0 +1,59 @@
+#!/bin/bash
+# ARCH variable can set initialize
+BUILD_DIR=bin
+ARCH=${ARCH:-$(uname -m)}
+BUILDNAME=streamer-udp-grapes-static
+
+mkdir -p $BUILD_DIR
+
+[[ "$ARCH" =~ .*86 ]] && {
+	WORKDIR="x86"
+
+	mkdir -p $WORKDIR
+	mkdir -p $BUILD_DIR/$WORKDIR
+	cd $WORKDIR
+	git clone http://halo.disi.unitn.it/~baldesi/PublicGits/Streamers-build.git/
+	cd Streamers-build
+	git submodule init
+	git submodule update
+	cd THIRDPARTY-LIBS/x264
+	git checkout 68f6db44035e8f9d4d00a73e5703eb1d7ff8d619
+	cd ../..
+	git add THIRDPARTY-LIBS/x264
+	git commit -m "Change checkout hash"
+	make simple
+	cd ..
+	cp Streamers-build/Streamers/streamer-udp-grapes-static ../$BUILD_DIR/$WORKDIR/$BUILDNAME
+	cd ..
+}
+[[ "$ARCH" =~ arm.* ]] && {
+	WORKDIR="arm"
+
+	mkdir -p $WORKDIR
+	mkdir -p $BUILD_DIR/$WORKDIR
+	cd $WORKDIR
+
+	[ ! -d "ffmpeg-1.2.4" ] && { 
+		wget http://www.ffmpeg.org/releases/ffmpeg-1.2.4.tar.gz 
+		tar xzf ffmpeg-1.2.4.tar.gz
+	}
+	cd ffmpeg-1.2.4/
+	./configure --enable-cross-compile --cross-prefix=arm-linux-gnueabi- --arch=arm --target-os=linux
+	CC=arm-linux-gnueabi-gcc AR=arm-linux-gnueabi-ar make -j 5
+	cd ..
+
+	git clone git://peerstreamer.org/abeni/GRAPES.git
+	cd GRAPES/src/
+	CC=arm-linux-gnueabi-gcc AR=arm-linux-gnueabi-ar FFMPEG_DIR=$(pwd)/../../ffmpeg-1.2.4 make
+	cd ../..
+
+	git clone git://halo.disi.unitn.it/cskiraly/Streamers.git
+	cd Streamers
+	git checkout grapes-0.3
+	./configure --with-grapes=$(pwd)/../GRAPES --with-ffmpeg=$(pwd)/../ffmpeg-1.2.4 --with-static=2
+	CC=arm-linux-gnueabi-gcc AR=arm-linux-gnueabi-ar make
+	cd ..
+	cp Streamers/streamer-grapes-static ../$BUILD_DIR/$WORKDIR/$BUILDNAME
+	cd ..
+}
+
