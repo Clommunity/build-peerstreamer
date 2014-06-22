@@ -55,8 +55,7 @@ mkdir -p $WORKDIR
 
 [[ "$ARCH" =~ arm.* ]] && {
 	ARCHDIR="arm"
-
-	[[ ]]
+	
 	mkdir -p $WORKDIR/${ARCHDIR}
 	mkdir -p $BUILD_DIR/${ARCHDIR}
 	cd $WORKDIR/${ARCHDIR}
