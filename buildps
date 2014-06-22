@@ -1,15 +1,17 @@
 #!/bin/bash
 # ARCH variable can set initialize
+# In this moment 64 bits can not compiler for 32 bits.
 BUILD_DIR=bin
 WORKDIR=build
-ARCH=${ARCH:-$(uname -m)}
+REALARCH=$(uname -m)
+ARCH=${ARCH:-${REALARCH}}
 BUILDNAME=streamer-udp-grapes-static
 
 mkdir -p $BUILD_DIR
 mkdir -p $WORKDIR
 
-[[ "$ARCH" =~ .*86 ]] && {
-	ARCHDIR="x86"
+[[ "$ARCH" =~ x86_64 ]] && {
+	ARCHDIR="amd64"
 
 	mkdir -p $WORKDIR/${ARCHDIR}
 	mkdir -p $BUILD_DIR/${ARCHDIR}
@@ -29,9 +31,32 @@ mkdir -p $WORKDIR
 	cd ../..
 	strip $BUILD_DIR/${ARCHDIR}/$BUILDNAME
 }
+[[ "$ARCH" =~ i.86 ]] && {
+	ARCHDIR="i386"
+
+	mkdir -p $WORKDIR/${ARCHDIR}
+	mkdir -p $BUILD_DIR/${ARCHDIR}
+	cd $WORKDIR/${ARCHDIR}
+	git clone http://halo.disi.unitn.it/~baldesi/PublicGits/Streamers-build.git/
+	cd Streamers-build
+	git submodule init
+	git submodule update
+	cd THIRDPARTY-LIBS/x264
+	git checkout 68f6db44035e8f9d4d00a73e5703eb1d7ff8d619
+	cd ../..
+	git add THIRDPARTY-LIBS/x264
+	git commit -m "Change checkout hash"
+	make simple
+	cd ..
+	cp Streamers-build/Streamers/streamer-udp-grapes-static ../../$BUILD_DIR/${ARCHDIR}/$BUILDNAME
+	cd ../..
+	strip $BUILD_DIR/${ARCHDIR}/$BUILDNAME
+}
+
 [[ "$ARCH" =~ arm.* ]] && {
 	ARCHDIR="arm"
 
+	[[ ]]
 	mkdir -p $WORKDIR/${ARCHDIR}
 	mkdir -p $BUILD_DIR/${ARCHDIR}
 	cd $WORKDIR/${ARCHDIR}
