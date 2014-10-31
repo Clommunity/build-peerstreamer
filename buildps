@@ -10,6 +10,19 @@ BUILDNAME=streamer-udp-grapes-static
 mkdir -p $BUILD_DIR
 mkdir -p $WORKDIR
 
+patch() {
+	currentdir=$1
+	psdir=$2/
+	for file in $currentdir/*; do
+		if [ -d $file ]; then
+			file_cat $file $psdir/$(basename $file)
+		else
+			#patch -p1 < ../../../../differ  #Aixo es el que s'ha d'executar per fer el patch...
+		fi
+		echo " "
+	done
+}
+
 [[ "$ARCH" =~ x86_64 ]] && {
 	ARCHDIR="amd64"
 
@@ -25,6 +38,7 @@ mkdir -p $WORKDIR
 	cd ../..
 	git add THIRDPARTY-LIBS/x264
 	git commit -m "Change checkout hash"
+	#patch patch/ $$WORKDIR/${ARCHDIR}
 	make simple
 	cd ..
 	cp Streamers-build/Streamers/streamer-udp-grapes-static ../../$BUILD_DIR/${ARCHDIR}/$BUILDNAME

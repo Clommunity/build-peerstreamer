@@ -1,0 +1,45 @@
+diff --git a/loop.c b/loop.c
+index 7888783..bbfc7fa 100644
+--- a/loop.c
++++ b/loop.c
+@@ -47,6 +47,7 @@
+ 
+ #define BUFFSIZE 512 * 1024
+ #define FDSSIZE 16
++#define TIMEOUT 300		//Timout to exit after no packages received
+ struct timeval period = {0, 500000};
+ 
+ //calculate timeout based on tnext
+@@ -68,7 +69,11 @@ void loop(struct nodeID *s, int csize, int buff_size)
+   static uint8_t buff[BUFFSIZE];
+   int cnt = 0;
+   struct timeval tnext;
++  time_t lastpackage;
++  time_t nopackage;
+   
++  lastpackage = time(NULL);
++  nopackage = time(NULL);
+   gettimeofday(&tnext, NULL);
+   period.tv_sec = csize / 1000000;
+   period.tv_usec = csize % 1000000;
+@@ -99,7 +104,9 @@ void loop(struct nodeID *s, int csize, int buff_size)
+           update_peers(remote, buff, len);
+           break;
+         case MSG_TYPE_CHUNK:
+-          dtprintf("Chunk message received:\n");
++		  // If chunk received, updating lastpackage time
++		  lastpackage = time(NULL);
++		  printf("Chunk received, resetting timeval\n");
+           received_chunk(remote, buff, len);
+           break;
+         case MSG_TYPE_SIGNALLING:
+@@ -111,6 +118,9 @@ void loop(struct nodeID *s, int csize, int buff_size)
+       }
+       nodeid_free(remote);
+     } else {
++	  nopackage = time(NULL);
++	  time_t elapsedtime = nopackage - lastpackage;
++	  if ( elapsedtime >= TIMEOUT ) exit(0);
+       struct timeval tmp;
+       send_offer();
+       if (cnt++ % 10 == 0) {
