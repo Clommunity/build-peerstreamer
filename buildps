@@ -6,20 +6,28 @@ WORKDIR=build
 REALARCH=$(uname -m)
 ARCH=${ARCH:-${REALARCH}}
 BUILDNAME=streamer-udp-grapes-static
+BASEDIR=$(pwd)		# Supposing the script is called from its dirname...
 
 mkdir -p $BUILD_DIR
 mkdir -p $WORKDIR
 
-patch() {
+doPatch() {
 	currentdir=$1
 	psdir=$2/
+	cd $currentdir
 	for file in $currentdir/*; do
+		echo "currentdir is $currentdir"
+		echo "psdir is $psdir"
 		if [ -d $file ]; then
-			file_cat $file $psdir/$(basename $file)
+			echo "$file is a dir, switching now"
+			doPatch $file $psdir/$(basename $file)
 		else
-			#patch -p1 < ../../../../differ  #Aixo es el que s'ha d'executar per fer el patch...
+			echo "switching to $psdir to patch $file"
+			cd $psdir			#Switching to ps workdir to patch the file
+			patch -p1 < $file  	#Applying patch
+			cd -				#Switching back to previous working dir
+			echo "came back from $psdir, actual path is $(pwd) = $currentdir ?"
 		fi
-		echo " "
 	done
 }
 
@@ -38,7 +46,9 @@ patch() {
 	cd ../..
 	git add THIRDPARTY-LIBS/x264
 	git commit -m "Change checkout hash"
-	#patch patch/ $$WORKDIR/${ARCHDIR}
+	tmpdir=$PWD
+	doPatch $BASEDIR/patch $BASEDIR/$WORKDIR/${ARCHDIR}/Streamers-build
+	cd $tmpdir
 	make simple
 	cd ..
 	cp Streamers-build/Streamers/streamer-udp-grapes-static ../../$BUILD_DIR/${ARCHDIR}/$BUILDNAME
@@ -60,6 +70,9 @@ patch() {
 	cd ../..
 	git add THIRDPARTY-LIBS/x264
 	git commit -m "Change checkout hash"
+	tmpdir=$PWD
+	doPatch $BASEDIR/patch $BASEDIR/$WORKDIR/${ARCHDIR}/Streamers-build
+	cd $tmpdir
 	make simple
 	cd ..
 	cp Streamers-build/Streamers/streamer-udp-grapes-static ../../$BUILD_DIR/${ARCHDIR}/$BUILDNAME
@@ -92,6 +105,7 @@ patch() {
 	cd Streamers
 	git checkout grapes-0.3
 	./configure --with-grapes=$(pwd)/../GRAPES --with-ffmpeg=$(pwd)/../ffmpeg-1.2.4 --with-static=2
+	#doPatch $BASEDIR/patch $BASEDIR/$WORKDIR/${ARCHDIR}
 	CC=arm-linux-gnueabi-gcc AR=arm-linux-gnueabi-ar make
 	cd ..
 	cp Streamers/streamer-grapes-static ../../$BUILD_DIR/${ARCHDIR}/$BUILDNAME
