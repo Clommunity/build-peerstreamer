@@ -7,6 +7,7 @@ REALARCH=$(uname -m)
 ARCH=${ARCH:-${REALARCH}}
 BUILDNAME=streamer-udp-grapes-static
 BASEDIR=$(pwd)		# Supposing the script is called from its dirname...
+DEBUG=0
 
 mkdir -p $BUILD_DIR
 mkdir -p $WORKDIR
@@ -16,19 +17,19 @@ doPatch() {
 	psdir=$2/
 	cd $currentdir
 	for file in $currentdir/*; do
-		echo "currentdir is $currentdir"
-		echo "psdir is $psdir"
+		[ $DEBUG ] && echo "currentdir is $currentdir"
+		[ $DEBUG ] && echo "psdir is $psdir"
 		if [ -d $file ]; then
-			echo "$file is a dir, switching now"
+			[ $DEBUG ] && echo "$file is a dir, switching now"
 			doPatch $file $psdir/$(basename $file)
 		else
-			echo "switching to $psdir to patch $file"
+			[ $DEBUG ] && echo "switching to $psdir to patch $file"
 			cd $psdir			#Switching to ps workdir to patch the file
 			patch -p1 < $file  	#Applying patch
 			cd -				#Switching back to previous working dir
-			echo "came back from $psdir, actual path is $(pwd) = $currentdir ?"
 		fi
 	done
+	psdir=$(dirname $psdir)
 }
 
 [[ "$ARCH" =~ x86_64 ]] && {
